@@ -3,4 +3,4 @@ A collection of many c language coding projects that aim to solve or organize a 
 
 so far: 
 Plularity: Basic voting system
-Tideman: Complex voting system
+Tideman: Complex voting system using the Tideman's solution
