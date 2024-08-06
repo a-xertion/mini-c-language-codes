@@ -1,0 +1,204 @@
+#include "helpers.h"
+#include <math.h>
+
+
+// swaps two values for the reflect method
+void swap(RGBTRIPLE *a, RGBTRIPLE *b);
+// rgb values
+int sobelNumRed(int row, int col, int height, int width, RGBTRIPLE image[height][width]);
+int sobelNumGreen(int row, int col, int height, int width, RGBTRIPLE image[height][width]);
+int sobelNumBlue(int row, int col, int height, int width, RGBTRIPLE image[height][width]);
+
+// Convert image to grayscale
+void grayscale(int height, int width, RGBTRIPLE image[height][width])
+{ // to turn gray scale is to average the rgb values and set all values to it
+    for(int i = 0; i < height; i++) // height is row
+    {
+        for(int j = 0; j < width; j++) // width is column
+        { // getting individual pixels
+            int average = round((image[i][j].rgbtRed + image[i][j].rgbtGreen + image[i][j].rgbtBlue) / 3.0);
+            image[i][j].rgbtRed = average;
+            image[i][j].rgbtGreen = average;
+            image[i][j].rgbtBlue = average;
+        }
+    }
+}
+
+// Reflect image horizontally
+void reflect(int height, int width, RGBTRIPLE image[height][width])
+{
+    for(int i = 0; i < height; i++)
+    {
+        for(int j = 0; j < width / 2; j++)
+        { // swapping left and right
+            swap(&image[i][j], &image[i][width - j - 1]);
+        }
+    }
+}
+
+void swap(RGBTRIPLE *a, RGBTRIPLE *b)
+{ // value of a and b swapped
+    RGBTRIPLE temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+// Blur image
+void blur(int height, int width, RGBTRIPLE image[height][width])
+{ // the blurring effect occurs when the average of the pixels (including itself) around a pixel = the pixel
+    RGBTRIPLE temp[height][width]; // a temp array because new information disrupts some processes
+    for(int i = 0; i < height; i++)
+    {
+        for(int j  = 0; j < width; j++)
+        { // specific to each pixel
+            double sumRed = 0;
+            double sumGreen = 0;
+            double sumBlue = 0;
+            double count = 0;
+            for(int k = i - 1; k <= i + 1; k++) // getting up and down
+            {
+                for(int l = j - 1; l <= j + 1; l++) // getting left and right
+                {
+                    if(k > -1 && l > -1 && k < height && l < width) // checks to make sure sum is not adding nonexistent info
+                    {
+                        sumRed += image[k][l].rgbtRed;
+                        sumGreen += image[k][l].rgbtGreen;
+                        sumBlue += image[k][l].rgbtBlue; // adding nums
+                        count++;
+                    }
+                }
+            }
+            temp[i][j].rgbtRed = round(sumRed / count); // average is implemented on pixels
+            temp[i][j].rgbtGreen = round(sumGreen / count);
+            temp[i][j].rgbtBlue = round(sumBlue / count);
+        }
+    }
+    // adding new data to the image data
+    for(int i = 0; i < height; i++)
+    {
+        for(int j = 0; j < width; j++)
+        {
+            image[i][j] = temp[i][j];
+        }
+    }
+}
+
+
+// Detect edges
+void edges(int height, int width, RGBTRIPLE image[height][width])
+{ // using Sobel Operator
+    RGBTRIPLE temp[height][width];
+    for(int i = 0; i < height; i++)
+    {
+        for(int j = 0; j < width; j++)
+        { // each individual pixel now
+            // needs each individual rgb value and Gx, Gy
+            temp[i][j].rgbtRed = sobelNumRed(i, j, height, width, image);// add method here
+            temp[i][j].rgbtGreen = sobelNumGreen(i, j, height, width, image);
+            temp[i][j].rgbtBlue = sobelNumBlue(i, j, height, width, image);
+        }
+    }
+    // data being recorded into image
+    for(int i = 0; i < height; i++)
+    {
+        for(int j = 0; j < width; j++)
+        {
+            image[i][j] = temp[i][j];
+        }
+    }
+}
+
+int sobelNumRed(int row, int col, int height, int width, RGBTRIPLE image[height][width])
+{ // FOR RED COLOR ONLY
+    int Gx[3][3] =
+    {
+        {-1, 0, 1},
+        {-2, 0, 2},
+        {-1, 0, 1}
+    };
+    int Gy[3][3] =
+    {
+        {-1, -2, -1},
+        {0, 0, 0},
+        {1, 2, 1}
+    };
+    // given specific row and col of the pixel
+    int sumX = 0;
+    int sumY = 0;
+    for(int i = row - 1; i <= row + 1; i++)
+    {
+        for(int j = col - 1; j <= col + 1; j++)
+        {
+            if(i > -1 && j > -1 && i < height && j < width)
+            {
+                sumX += (image[i][j].rgbtRed * Gx[i - row + 1][j - col + 1]); // gets value and multiplies by Gx and Gy
+                sumY += (image[i][j].rgbtRed * Gy[i - row + 1][j - col + 1]);
+            }
+        }
+    }
+    int value = round(sqrt(sumX * sumX + sumY * sumY)) > 225;
+    return value > 225 ? 225 : (value < 0 ? 0 : value); // checks if value is above or below the [0 - 225] range
+}
+
+int sobelNumGreen(int row, int col, int height, int width, RGBTRIPLE image[height][width])
+{ // FOR GREEN COLOR ONLY
+    int Gx[3][3] =
+    {
+        {-1, 0, 1},
+        {-2, 0, 2},
+        {-1, 0, 1}
+    };
+    int Gy[3][3] =
+    {
+        {-1, -2, -1},
+        {0, 0, 0},
+        {1, 2, 1}
+    };
+    // given specific row and col of the pixel
+    int sumX = 0;
+    int sumY = 0;
+    for(int i = row - 1; i <= row + 1; i++)
+    {
+        for(int j = col - 1; j <= col + 1; j++)
+        {
+            if(i > -1 && j > -1 && i < height && j < width)
+            {
+                sumX += (image[i][j].rgbtGreen * Gx[i - row + 1][j - col + 1]); // gets value and multiplies by Gx and Gy
+                sumY += (image[i][j].rgbtGreen * Gy[i - row + 1][j - col + 1]);
+            }
+        }
+    }
+    int value = round(sqrt(sumX * sumX + sumY * sumY)) > 225;
+    return value > 225 ? 225 : (value < 0 ? 0 : value); // checks if value is above or below the [0 - 225] range
+}
+int sobelNumBlue(int row, int col, int height, int width, RGBTRIPLE image[height][width])
+{ // FOR BLUE COLOR ONLY
+    int Gx[3][3] =
+    {
+        {-1, 0, 1},
+        {-2, 0, 2},
+        {-1, 0, 1}
+    };
+    int Gy[3][3] =
+    {
+        {-1, -2, -1},
+        {0, 0, 0},
+        {1, 2, 1}
+    };
+    // given specific row and col of the pixel
+    int sumX = 0;
+    int sumY = 0;
+    for(int i = row - 1; i <= row + 1; i++)
+    {
+        for(int j = col - 1; j <= col + 1; j++)
+        {
+            if(i > -1 && j > -1 && i < height && j < width)
+            {
+                sumX += (image[i][j].rgbtBlue * Gx[i - row + 1][j - col + 1]); // gets value and multiplies by Gx and Gy
+                sumY += (image[i][j].rgbtBlue * Gy[i - row + 1][j - col + 1]);
+            }
+        }
+    }
+    int value = round(sqrt(sumX * sumX + sumY * sumY)) > 225;
+    return value > 225 ? 225 : (value < 0 ? 0 : value); // checks if value is above or below the [0 - 225] range
+}
