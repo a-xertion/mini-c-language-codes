@@ -1,0 +1,52 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdbool.h>
+
+int main(int argc, char *argv[])
+{
+    if(argc != 2) // checking to make sure that there is only one single command line argument
+    {
+        printf("Usage: ./recover FILE\n");
+        return 1;
+    }
+    //opening the memory card
+    FILE *card = fopen(argv[1], "r");
+
+    if(card == NULL) // checking if the file opened correctly. NULL = did not open correctly
+    {
+        return 1;
+    }
+
+    uint8_t buffer[512]; // creating memory to store the information gathered from card
+    bool found_jpeg = false;
+    // reading the information
+    int counter = 0;
+    char filename[8]; // to store jpeg names
+    FILE *img = NULL;
+    while(fread(buffer, 1, 512, card) == 512) // fread will return 0 when it has read all of the bytes
+    { // if start a new jpeg
+        if(buffer[0] == 0xff && buffer[1] == 0xd8 && buffer[2] == 0xff && (buffer[3] & 0xf0) == 0xe0)
+        {
+            found_jpeg = true;
+        }
+        if(found_jpeg) // for the very first jpeg found
+        {
+            if(counter != 0)
+            {
+                fclose(img);
+            }
+            sprintf(filename, "%03i.jpg", counter);
+            img = fopen(filename, "w");
+            fwrite(buffer, 1, 512, img);
+            found_jpeg = false;
+            counter++;
+        }
+        else if(counter != 0)
+        {
+            fwrite(buffer, 1, 512, img);
+        }
+    }
+    fclose(img);
+    fclose(card);
+}
