@@ -7,3 +7,4 @@ Tideman: Complex voting system using the Tideman's solution
 Volume: Code that alters an inputted volume sample
 Filter: Code that alters an inputted pixel image file
 Recover: Code that recovers lost memory in a memory card
+Inheritance: Code that, given the child allele of blood type, will determine the possible blood alleles of their predecessors
