@@ -1,0 +1,27 @@
+# this code is supposed to make a pyramid out of # depending on what the user inputs (completed)
+
+ #  # <- example 
+##  ## <-- Height: 2
+
+height = input("Height: ")
+height_valid = False
+while not height_valid: # ensuring that height is a valid number
+    try:
+        height = int(height)
+        if(height > 0 and height < 9):
+            height_valid = True # leaving the loop
+            break
+    except ValueError: # making an exception to check if a str was inputted
+        height = input("Height: ")
+        continue
+    height = input("Height: ")
+
+for x in range(height): # this outer loop decides the number of rows / layers
+    for y in range(height - x - 1): # this inner loop decides the number of spaces (left side)
+        print(" ", end = "")
+    for z in range(x + 1): # this loop figures out how many # to print for the pyramid (left)
+        print("#", end = "")
+    print("  ", end = "") # the two spaces in the middle
+    for a in range(x + 1): # this loop figures out how many # to print for the pyramid (right)
+        print("#", end = "")
+    print("") # next line
